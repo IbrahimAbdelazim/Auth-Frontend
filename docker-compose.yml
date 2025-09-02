@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        # Build-time environment variables
+        - VITE_API_BASE_URL=${VITE_API_BASE_URL:-http://localhost:3000/api/v1/}
+        - VITE_API_HOME=${VITE_API_HOME:-http://localhost:3000}
+        - NODE_ENV=${NODE_ENV:-production}
+        - VITE_APP_NAME=${VITE_APP_NAME:-EasyGenerator Frontend}
+        - VITE_APP_VERSION=${VITE_APP_VERSION:-1.0.0}
+    image: easygenerator-frontend:1.0.0
+    container_name: easygenerator-frontend
+    ports:
+      - "3001:80"
+    restart: unless-stopped
+    networks:
+      - easygenerator-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.frontend.rule=Host(`localhost`)"
+      - "traefik.http.services.frontend.loadbalancer.server.port=80"
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+networks:
+  easygenerator-network:
+    driver: bridge
+    name: easygenerator-network
